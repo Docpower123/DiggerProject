@@ -152,6 +152,25 @@ db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+enemy db 16,16
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,0,10,10,10,10,10,10,0,0,0,0,0
+db 0,14,14,14,10,10,10,10,10,10,10,10,14,14,14,0
+db 14,14,14,0,14,10,10,10,10,10,10,14,14,0,14,14
+db 14,14,14,14,14,10,10,10,10,10,10,14,14,14,14,14
+db 14,14,14,14,14,10,10,10,10,10,10,14,14,14,14,14
+db 0,14,14,14,10,10,10,10,10,10,10,10,14,14,14,0
+db 0,0,0,0,10,10,10,10,10,10,10,10,0,0,0,0
+db 0,0,0,0,0,4,10,10,10,10,4,0,0,0,0,0
+db 0,0,0,0,4,4,0,0,0,0,4,4,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+
 diamond db 8, 8
 db 136,136,136,2,2,136,136,136
 db 136,136,2,2,2,2,136,136
@@ -219,7 +238,7 @@ window_width dw 140h ;(320 pixels)
 
 window_height dw 0c8h ;(200 pixels)
 
-diamondlocs db  30, 60, 120, 60 ,30, 150, '$'
+diamondlocs db  60, 60, 120, 60 ,240, 60, 255, 60, 240, 80, 255, 80, '$'
 
 diamondeatan db 0
 
@@ -363,7 +382,7 @@ endp print
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 proc begin
-mov ax, 3
+mov ax, 6  ;numbers of diamonds
 mov bx, offset diamondlocs
 
 loopdiamond:
@@ -389,6 +408,20 @@ dec ax
 cmp ax,0
 jne loopdiamond
 
+
+mov cx, 400
+mov dx, 20
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+mov bx, offset enemy
+push bp
+mov bp,sp
+mov [bp+10], bx
+call print
+pop bp
+
 mov bx, offset xloc
 mov cx, 120
 mov [bx], cx
@@ -404,7 +437,7 @@ pop bp
 
 mov al, 1
 mov bh, 0
-mov bl, 00111011b
+mov bl, 0111b
 mov cx, 6 ;offset msg1 ; calculate message size.
 mov dl, 1
 mov dh, 1
@@ -416,22 +449,7 @@ int 10h
 jmp msg1end
  msg1 db "Score:"
  msg1end: 
- 
-mov al, 1 
-mov bh, 0
-mov bl, 00111011b
-mov cx, 1 ;offset msg2 ; calculate message size.
-mov dl, 8
-mov dh, 1
-push cs
-pop es
-mov bp, offset msg2
-mov ah, 13h
-int 10h
-jmp msg2end
- msg2 db '0'
- msg2end: 
- 
+  
 ret
 endp begin
 
@@ -630,17 +648,20 @@ pop bp
 waiting: ;wait until a key is pressed & check what key was entered
 
 call diamondscore
-
-
 mov ah, 02h
 mov bh, 00h
-mov dh, 04h ;row
-mov dl, 06h  ;column
+mov dh, 01h ;row
+mov dl, 07h  ;column
 int 10h
 
 mov dx, offset scoremessage
 mov ah, 9h
 int 21h 
+
+mov bx, offset score
+mov cl, [bx]
+cmp cl, 6
+je exit
   
  scoredone:
 		mov bx, offset cleaner
