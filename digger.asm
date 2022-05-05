@@ -152,38 +152,16 @@ db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-diamond db 16, 16
-db 136,136,136,136,136,10,10,10,10,10,10,136,136,136,136,136
+diamond db 8, 8
+db 136,136,136,2,2,136,136,136
+db 136,136,2,2,2,2,136,136
+db 136,2,2,2,2,2,2,136
+db 136,2,2,2,2,2,2,136
+db 136,2,2,2,2,2,2,136
+db 136,2,2,2,2,2,2,136
+db 136,136,2,2,2,2,136,136
+db 136,136,136,2,2,136,136,136
 
-db 136,136,136,10,10,10,10,10,10,10,10,10,10,136,136,136
-
-db 136,10,10,10,10,10,10,10,10,10,10,10,10,10,10,136
-
-db 10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10
-
-db 10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10
-
-db 136,10,10,10,10,10,10,10,10,10,10,10,10,10,10,136
-
-db 136,136,10,10,10,10,10,10,10,10,10,10,10,10,136,136
-
-db 136,136,10,10,10,10,10,10,10,10,10,10,10,10,136,136
-
-db 136,136,136,10,10,10,10,10,10,10,10,10,10,136,136,136
-
-db 136,136,136,136,10,10,10,10,10,10,10,10,136,136,136,136  
-
-db 136,136,136,136,10,10,10,10,10,10,10,10,136,136,136,136
-
-db 136,136,136,136,136,10,10,10,10,10,10,136,136,136,136,136
-
-db 136,136,136,136,136,10,10,10,10,10,10,136,136,136,136,136
-
-db 136,136,136,136,136,136,10,10,10,10,136,136,136,136,136,136
-
-db 136,136,136,136,136,136,10,10,10,10,136,136,136,136,136,136
-
-db 136,136,136,136,136,136,136,10,10,136,136,136,136,136,136,136
 
 ball db 16,16
 db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -218,6 +196,10 @@ db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 last db 'd'
 
 score db 0
@@ -241,7 +223,12 @@ diamondlocs db  30, 60, 120, 60 ,30, 150, '$'
 
 diamondeatan db 0
 
-;30,60
+xball db 0
+
+yball db 0
+
+note dw 2394h ; 1193180 / 131 -> (hex)
+
 
 
 CODESEG
@@ -254,9 +241,9 @@ proc delay ;create a delay by using a double loop to waste time
 push cx
 push bx
 
-	mov cx, 0FFFFh	
+	mov cx, 5328h	
 	loop1:
-		mov bx, 15
+		mov bx, 1
 		loop2:
 			dec bx
 			cmp bx, 0
@@ -541,22 +528,22 @@ mov cx, [bx]
 mov ch, 0
 cmp cx, '$'
 je countine1
-add cx, 8
+add cx, 4
 inc bx
 mov dx, [bx]
 mov dh, 0
-add dx, 8
+add dx, 4
 inc bx
 push bx
 mov bh, 0h
 mov ah, 0Dh
 int 10h
 pop bx
-cmp al, 10
+cmp al, 2
 jne addscore
 jmp loopsearch
-addscore:
 
+addscore:
 push bx
 mov bx, offset score
 mov dl, [bx]
@@ -591,29 +578,31 @@ mov bx, offset diamondeatan
 mov dl, [bx]
 add dl, 2
 mov [bx], dl
-
-;mov bx, offset score
-;mov dx, [bx]
-;cmp dx, 1
-;jne countine1
-;mov bx, offset xloc
-;mov cx, [bx]
-;sub cx, 20 
-;mov [bx], cx
-
-mov bx, offset score
-mov dl, [bx]
-cmp dl, 2
-jne countine1
-mov bx, offset diggerW
-add bx, 24
-mov ax, 10
-mov [bx], ax
-
-
+call scoreupdate
 countine1:
 ret
 endp diamondscore
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc scoreupdate
+in al, 61h
+or al, 00000011b
+out 61h, al
+mov al, 0B6h
+out 43h, al
+; play frequency 131Hz
+mov ax, [note]
+out 42h, al ; Sending lower byte
+mov al, ah
+out 42h, al ; Sending upper byte
+call delay
+in al, 61h
+and al, 11111100b
+out 61h, al
+ret
+endp scoreupdate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         main
@@ -654,7 +643,6 @@ mov ah, 9h
 int 21h 
   
  scoredone:
-;memory leak related to the cleaner (prob because of size change and the impact on other cells)
 		mov bx, offset cleaner
 		mov cl, 0
 		mov [bx], cl
@@ -662,7 +650,7 @@ int 21h
 		mov bp,sp
 		call print
 pop bp		
-		;call delay
+		call delay
 	mov bx, offset cleaner
 		mov cl, 1
 		mov [bx], cl
@@ -676,11 +664,39 @@ pop bp
 		jz waiting 
 		mov ax, 0
 		int 16h		
-		;cmp al, ' '
-		;je shoot
+		cmp al, ' '
+		je shoot
 		cmp al, 'q'
 		je exit
-		
+		jmp moveing
+
+shoot:
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+mov bx, offset ball
+push bp
+mov bp,sp
+mov [bp+10], bx
+pop bp	
+
+;reset
+mov bx, offset xloc
+mov cx, 120
+mov [bx], cx
+mov bx, offset yloc
+mov dx, 20
+mov [bx], dx
+mov bx, offset diggerD
+push bp
+mov bp,sp
+mov [bp+10], bx
+call print 
+pop bp
+jmp waiting
+
+moveing:
 push bp
 mov bp,sp 
 mov [bp+6], ax
