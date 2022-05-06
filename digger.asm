@@ -246,6 +246,12 @@ xball db 0
 
 yball db 0
 
+destroyerx db 40
+destroyery db 30
+
+diggerx db 0
+diggery db 0
+
 note dw 2394h ; 1193180 / 131 -> (hex)
 
 
@@ -409,8 +415,8 @@ cmp ax,0
 jne loopdiamond
 
 
-mov cx, 400
-mov dx, 20
+mov cx, 40
+mov dx, 30
 mov bx, offset xloc
 mov [bx], cx
 mov bx, offset yloc
@@ -623,6 +629,98 @@ ret
 endp scoreupdate
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc destroyer
+
+;delete the enemy
+		mov bx, offset cleaner
+		mov cl, 1
+		mov [bx], cl
+
+;gets destroyer location
+mov bx, offset destroyerx
+mov cl, [bx]
+mov bx, offset destroyery
+mov dl, [bx]
+
+mov bx, offset xloc
+mov [bx], cl
+mov bx, offset yloc
+mov [bx], dl
+
+		push bp
+		mov bp,sp
+		call print
+        pop bp
+
+		mov bx, offset cleaner
+		mov cl, 0
+		mov [bx], cl
+
+mov bx, offset diggerx
+mov al, [bx]
+mov bx, offset destroyerx
+mov cl, [bx]
+cmp cl, al
+je ychecks 
+cmp cl, al
+jng nextxcheck
+dec cl
+mov [bx], cl
+jmp ychecks
+nextxcheck:
+inc cl
+mov [bx], cl
+ychecks:
+mov bx, offset diggery
+mov al, [bx]
+mov bx, offset destroyery
+mov dl, [bx]
+cmp dl, al
+je done 
+cmp dl, al
+jng nextycheck
+dec dl
+mov [bx], dl
+jmp done
+nextycheck:
+inc dl
+mov [bx], dl
+done:
+mov bx, offset xloc
+mov [bx], cl
+mov bx, offset yloc
+mov [bx], dl
+
+mov bx, offset enemy
+push bp
+mov bp,sp
+mov [bp+10], bx
+call print
+pop bp
+
+mov bx, offset diggerA
+push bp
+mov bp,sp
+mov [bp+10], bx
+pop bp
+
+
+mov bx, offset diggerx
+mov cl, [bx]
+mov bx, offset diggery
+mov dl, [bx]
+mov bx, offset xloc
+mov [bx], cl
+mov bx, offset yloc
+mov [bx], dl
+				
+
+
+ret
+endp destroyer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -658,12 +756,15 @@ mov dx, offset scoremessage
 mov ah, 9h
 int 21h 
 
-mov bx, offset score
+mov bx, offset xloc
 mov cl, [bx]
-cmp cl, 6
-je exit
+mov bx, offset diggerx
+mov [bx], cl
+mov bx, offset yloc
+mov dl, [bx]
+mov bx, offset diggery
+mov [bx], dl
   
- scoredone:
 		mov bx, offset cleaner
 		mov cl, 0
 		mov [bx], cl
@@ -680,16 +781,32 @@ pop bp
 		call print
 pop bp	
 
+;call destroyer
+
+mov bx, offset score
+mov cl, [bx]
+cmp cl, 6
+je exit
+
+
 	mov ax, 0100h
 		int 16h
 		jz waiting 
 		mov ax, 0
-		int 16h		
+		int 16h	
+		cmp al, 'r'
+		je test1	
 		cmp al, ' '
 		je shoot
 		cmp al, 'q'
 		je exit
 		jmp moveing
+
+test1:
+call destroyer
+jmp waiting
+
+
 
 shoot:
 mov bx, offset xloc
@@ -724,7 +841,6 @@ mov [bp+6], ax
 mov [bp+10], ax
 call move
 pop bp
-
 jmp waiting
 
 exit :
