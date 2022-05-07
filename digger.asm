@@ -9,6 +9,14 @@ xloc dw 30
 
 yloc dw 60
 
+destroyerx dw 40
+
+destroyery dw 30
+
+diggerx dw 30
+
+diggery dw 60
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         Digger Sprites
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -246,13 +254,9 @@ xball db 0
 
 yball db 0
 
-destroyerx db 40
-destroyery db 30
-
-diggerx db 0
-diggery db 0
-
 note dw 2394h ; 1193180 / 131 -> (hex)
+
+death db 0
 
 
 
@@ -640,14 +644,14 @@ proc destroyer
 
 ;gets destroyer location
 mov bx, offset destroyerx
-mov cl, [bx]
+mov cx, [bx]
 mov bx, offset destroyery
-mov dl, [bx]
+mov dx, [bx]
 
 mov bx, offset xloc
-mov [bx], cl
+mov [bx], cx
 mov bx, offset yloc
-mov [bx], dl
+mov [bx], dx
 
 		push bp
 		mov bp,sp
@@ -659,39 +663,76 @@ mov [bx], dl
 		mov [bx], cl
 
 mov bx, offset diggerx
-mov al, [bx]
+mov ax, [bx]
 mov bx, offset destroyerx
-mov cl, [bx]
-cmp cl, al
-je ychecks 
-cmp cl, al
-jng nextxcheck
-dec cl
-mov [bx], cl
-jmp ychecks
-nextxcheck:
-inc cl
-mov [bx], cl
-ychecks:
+mov cx, [bx]
+cmp ax, cx
+jne movedes
 mov bx, offset diggery
 mov al, [bx]
 mov bx, offset destroyery
-mov dl, [bx]
-cmp dl, al
-je done 
-cmp dl, al
-jng nextycheck
-dec dl
-mov [bx], dl
+mov cl, [bx]
+cmp al, cl
+jne movedes
+mov bx, offset death
+mov cl, 1
+mov [bx], cl
 jmp done
-nextycheck:
-inc dl
-mov [bx], dl
+
+
+movedes:
+mov bx, offset diggery
+mov ax, [bx]
+mov bx, offset destroyery
+mov dx, [bx]
+cmp dx, ax
+je xchecks 
+cmp dx, ax
+jng destroyerS
+destroyerW:
+cmp dx, 1
+jl xchecks
+sub dx, 1
+mov bx, offset destroyery
+mov [bx], dx
+jmp done
+destroyerS:
+cmp dx, 0b7h
+jg xchecks
+add dx, 1
+mov bx, offset destroyery
+mov [bx], dx
+jmp done
+
+xchecks:
+mov bx, offset diggerx
+mov ax, [bx]
+mov bx, offset destroyerx
+mov cx, [bx]
+cmp cx, ax
+je done
+cmp cx, ax
+jng destroyerD
+destroyerA:
+cmp cx, 1
+jl done
+dec cx
+mov bx, offset destroyerx
+mov [bx],cx
+jmp done
+destroyerD:
+cmp cx, 130h
+jg done
+inc cx
+mov bx, offset destroyerx
+mov [bx], cx
+jmp done
+
 done:
 mov bx, offset xloc
-mov [bx], cl
+mov [bx], cx
 mov bx, offset yloc
-mov [bx], dl
+mov [bx], dx
 
 mov bx, offset enemy
 push bp
@@ -700,6 +741,7 @@ mov [bp+10], bx
 call print
 pop bp
 
+reset1:
 mov bx, offset diggerA
 push bp
 mov bp,sp
@@ -708,13 +750,13 @@ pop bp
 
 
 mov bx, offset diggerx
-mov cl, [bx]
+mov cx, [bx]
 mov bx, offset diggery
-mov dl, [bx]
+mov dx, [bx]
 mov bx, offset xloc
-mov [bx], cl
+mov [bx], cx
 mov bx, offset yloc
-mov [bx], dl
+mov [bx], dx
 				
 
 
@@ -757,13 +799,13 @@ mov ah, 9h
 int 21h 
 
 mov bx, offset xloc
-mov cl, [bx]
+mov cx, [bx]
 mov bx, offset diggerx
-mov [bx], cl
+mov [bx], cx
 mov bx, offset yloc
-mov dl, [bx]
+mov dx, [bx]
 mov bx, offset diggery
-mov [bx], dl
+mov [bx], dx
   
 		mov bx, offset cleaner
 		mov cl, 0
@@ -781,7 +823,14 @@ pop bp
 		call print
 pop bp	
 
-;call destroyer
+call destroyer
+
+mov bx, offset death
+mov cl, [bx]
+cmp cl, 1
+je exit
+
+
 
 mov bx, offset score
 mov cl, [bx]
