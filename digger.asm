@@ -3,8 +3,6 @@ MODEL small
 STACK 100h
 DATASEG
 
-
-;
 xloc dw 30
 
 yloc dw 60
@@ -16,6 +14,10 @@ destroyery dw 30
 diggerx dw 30
 
 diggery dw 60
+
+ballx dw 0
+
+bally dw 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         Digger Sprites
@@ -197,27 +199,27 @@ db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-db 0,0,0,0,0,0,38,38,38,38,38,0,0,0,0,0
+db 0,0,0,0,0,0,4,4,4,4,4,0,0,0,0,0
 
-db 0,0,0,0,0,38,37,37,37,37,37,38,0,0,0,0
+db 0,0,0,0,0,4,1,1,1,1,1,4,0,0,0,0
 
-db 0,0,0,0,38,37,37,3,3,3,3,37,38,0,0,0
+db 0,0,0,0,4,1,1,9,9,9,9,1,4,0,0,0
 
-db 0,0,0,38,37,37,3,3,3,3,3,37,37,38,0,0
+db 0,0,0,4,1,1,9,9,9,9,9,1,1,4,0,0
 
-db 0,0,0,38,37,3,3,3,3,3,3,3,37,38,0,0
+db 0,0,0,4,1,9,9,9,9,9,9,9,1,4,0,0
 
-db 0,0,0,38,37,3,3,3,3,3,3,3,37,38,0,0
+db 0,0,0,4,1,9,9,9,9,9,9,9,1,4,0,0
 
-db 0,0,0,38,37,3,3,3,3,3,3,3,37,38,0,0
+db 0,0,0,4,1,9,9,9,9,9,9,9,1,4,0,0
 
-db 0,0,0,38,37,37,3,3,3,3,3,37,37,38,0,0
+db 0,0,0,4,1,1,9,9,9,9,9,1,1,4,0,0
 
-db 0,0,0,0,38,37,37,3,3,3,37,37,38,0,0,0
+db 0,0,0,0,4,1,1,9,9,9,1,1,4,0,0,0
 
-db 0,0,0,0,0,38,37,37,37,37,37,38,0,0,0,0
+db 0,0,0,0,0,4,1,1,1,1,1,4,0,0,0,0
 
-db 0,0,0,0,0,0,38,38,38,38,38,0,0,0,0,0
+db 0,0,0,0,0,0,4,4,4,4,4,0,0,0,0,0
 
 db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
@@ -250,13 +252,15 @@ diamondlocs db  60, 60, 120, 60 ,240, 60, 255, 60, 240, 80, 255, 80, '$'
 
 diamondeatan db 0
 
-xball db 0
-
-yball db 0
-
 note dw 2394h ; 1193180 / 131 -> (hex)
 
 death db 0
+
+ballway db 'w'
+
+ballwashoot db 0
+
+destroyerdead db 0
 
 
 
@@ -742,13 +746,6 @@ call print
 pop bp
 
 reset1:
-mov bx, offset diggerA
-push bp
-mov bp,sp
-mov [bp+10], bx
-pop bp
-
-
 mov bx, offset diggerx
 mov cx, [bx]
 mov bx, offset diggery
@@ -762,6 +759,270 @@ mov [bx], dx
 
 ret
 endp destroyer
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc shooting
+
+mov bx, offset ballwashoot
+mov al, 1
+mov [bx], al
+
+mov bx, offset diggerx
+mov cx, [bx]
+mov bx, offset diggery
+mov dx, [bx]
+
+mov bx, offset last
+mov al, [bx]
+
+mov bx, offset ballway
+mov [bx], al
+ 
+cmp al, 'w'
+jne Sball
+sub dx, 5
+jmp next1
+Sball:
+cmp al, 's'
+jne Aball
+add dx, 5
+jmp next1
+Aball:
+cmp al, 'a'
+jne Dball
+sub cx, 5
+jmp next1
+Dball:
+cmp al, 'd'
+jne next1
+add cx, 5
+
+next1:
+mov bx, offset ballx
+mov [bx], cx
+mov bx, offset bally
+mov [bx], dx
+
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+mov bx, offset ball
+push bp
+mov bp,sp
+mov [bp+10], bx
+call print
+pop bp
+
+reset2:
+mov bx, offset diggerx
+mov cx, [bx]
+mov bx, offset diggery
+mov dx, [bx]
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+
+ret
+endp shooting
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc moveball
+
+;delete the ball
+		mov bx, offset cleaner
+		mov cl, 1
+		mov [bx], cl
+
+mov bx, offset ballx
+mov cx, [bx]
+mov bx, offset bally
+mov dx, [bx]
+
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+		push bp
+		mov bp,sp
+		call print
+        pop bp
+
+		mov bx, offset cleaner
+		mov cl, 0
+		mov [bx], cl
+
+mov bx, offset ballway
+mov al, [bx]
+
+mov bx, offset ballx
+mov cx, [bx]
+mov bx, offset bally
+mov dx, [bx]
+
+cmp al, 'w'
+jne S1ball
+sub dx, 1
+jmp next2
+S1ball:
+cmp al, 's'
+jne A1ball
+add dx, 1
+jmp next2
+A1ball:
+cmp al, 'a'
+jne D1ball
+sub cx, 1
+jmp next2
+D1ball:
+cmp al, 'd'
+jne next2
+add cx, 1
+
+
+next2:
+mov bx, offset ballx
+mov [bx], cx
+mov bx, offset bally
+mov [bx], dx
+
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+mov bh,0h
+mov ah,0Dh
+int 10h 
+cmp al, 136
+jne checkifkilled
+mov bx, offset ballwashoot
+mov al, 0
+mov [bx], al
+jmp reset3
+
+checkifkilled:
+mov bx, offset destroyerx
+mov ax, [bx]
+mov bx, offset ballx
+mov cx, [bx]
+cmp cx,ax
+jne printball
+mov bx, offset destroyery
+mov ax, [bx]
+mov bx, offset bally
+mov dx, [bx]
+cmp dx,ax
+jne printball
+xor ax,ax
+mov bx, offset destroyerdead
+mov al, 1
+mov [bx], al
+mov bx, offset ballwashoot
+mov al, 0
+mov [bx], al
+jmp reset3
+
+
+printball:
+mov bx, offset ball
+push bp
+mov bp,sp
+mov [bp+10], bx
+call print
+pop bp
+
+reset3:
+mov bx, offset diggerx
+mov cx, [bx]
+mov bx, offset diggery
+mov dx, [bx]
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+ret
+endp moveball
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+proc deletedestroyer
+;delete the enemy
+		mov bx, offset cleaner
+		mov cl, 1
+		mov [bx], cl
+
+;gets destroyer location
+mov bx, offset destroyerx
+mov cx, [bx]
+mov bx, offset destroyery
+mov dx, [bx]
+
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+		push bp
+		mov bp,sp
+		call print
+        pop bp
+
+		mov bx, offset cleaner
+		mov cl, 0
+		mov [bx], cl
+
+mov bx, offset diggerx
+mov cx, [bx]
+mov bx, offset diggery
+mov dx, [bx]
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+ret
+endp deletedestroyer
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+proc cleandigger
+mov bx, offset xloc
+mov cx, [bx]
+mov bx, offset diggerx
+mov [bx], cx
+mov bx, offset yloc
+mov dx, [bx]
+mov bx, offset diggery
+mov [bx], dx
+  
+		mov bx, offset cleaner
+		mov cl, 0
+		mov [bx], cl
+		push bp
+		mov bp,sp
+		call print
+pop bp		
+		call delay
+	mov bx, offset cleaner
+		mov cl, 1
+		mov [bx], cl
+		push bp
+		mov bp,sp
+		call print
+pop bp	
+ret
+endp cleandigger
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -776,14 +1037,11 @@ int 10h
 call screen
 
 call begin
-mov bx, offset diggerW
+mov bx, offset diggerA
 push bp
 mov bp,sp
 mov [bp+10], bx
 pop bp
-
-
-
 
 waiting: ;wait until a key is pressed & check what key was entered
 
@@ -813,74 +1071,57 @@ mov [bx], dx
 		push bp
 		mov bp,sp
 		call print
-pop bp		
+;pop bp		
 		call delay
 	mov bx, offset cleaner
 		mov cl, 1
 		mov [bx], cl
-		push bp
-		mov bp,sp
+		;push bp
+		;mov bp,sp
 		call print
-pop bp	
+		pop bp
 
+mov bx, offset destroyerdead
+mov al, [bx]
+cmp al, 0
+jne exit
 call destroyer
+jmp did_digger_died
 
+clean_dead_destroyer:
+call deletedestroyer
+
+did_digger_died:
 mov bx, offset death
 mov cl, [bx]
 cmp cl, 1
 je exit
-
-
-
 mov bx, offset score
 mov cl, [bx]
 cmp cl, 6
 je exit
 
+mov bx, offset ballwashoot
+mov al, [bx]
+cmp al, 1
+jne checkformovment
+call moveball
+jmp waiting
 
+checkformovment:
 	mov ax, 0100h
 		int 16h
 		jz waiting 
 		mov ax, 0
 		int 16h	
-		cmp al, 'r'
-		je test1	
 		cmp al, ' '
 		je shoot
 		cmp al, 'q'
 		je exit
 		jmp moveing
 
-test1:
-call destroyer
-jmp waiting
-
-
-
 shoot:
-mov bx, offset xloc
-mov [bx], cx
-mov bx, offset yloc
-mov [bx], dx
-mov bx, offset ball
-push bp
-mov bp,sp
-mov [bp+10], bx
-pop bp	
-
-;reset
-mov bx, offset xloc
-mov cx, 120
-mov [bx], cx
-mov bx, offset yloc
-mov dx, 20
-mov [bx], dx
-mov bx, offset diggerD
-push bp
-mov bp,sp
-mov [bp+10], bx
-call print 
-pop bp
+call shooting
 jmp waiting
 
 moveing:
