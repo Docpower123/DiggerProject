@@ -15,9 +15,13 @@ diggerx dw 30
 
 diggery dw 60
 
-ballx dw 0
+ballx dw 30
 
-bally dw 0
+bally dw 60
+
+nubbinx dw 100
+
+nubbiny dw 50
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         Digger Sprites
@@ -225,6 +229,25 @@ db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
+money db 16,16
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+db 0,0,0,0,3,0,3,3,3,3,0,3,0,0,0,0
+db 0,0,0,0,0,3,3,3,3,3,3,0,0,0,0,0
+db 0,0,0,0,0,0,3,3,3,3,0,0,0,0,0,0
+db 0,0,0,0,0,3,3,3,3,3,3,0,0,0,0,0
+db 0,0,0,3,3,3,3,0,3,3,3,3,3,0,0,0
+db 0,0,3,3,3,3,0,0,0,0,3,3,3,3,0,0
+db 0,3,3,3,3,0,3,0,3,3,3,3,3,3,3,0
+db 0,3,3,3,3,3,0,0,3,3,3,3,3,3,3,0
+db 0,3,3,3,3,3,3,0,0,3,3,3,3,3,3,0
+db 0,3,3,3,3,3,3,0,3,0,3,3,3,3,3,0
+db 0,3,3,3,3,0,0,0,0,3,3,3,3,3,3,0
+db 0,3,3,3,3,3,3,0,3,3,3,3,3,3,3,0
+db 0,0,3,3,3,3,3,3,3,3,3,3,3,3,0,0
+db 0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0
+db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -262,6 +285,15 @@ ballwashoot db 0
 
 destroyerdead db 0
 
+nubbindiraction db 'a'
+
+nubbin_move db 'w', 's', 'a', 'd','$'
+
+moneyx db 100
+
+moneyy db 20 
+
+lives db 3
 
 
 CODESEG
@@ -436,6 +468,19 @@ mov [bp+10], bx
 call print
 pop bp
 
+mov cx, 1eh
+mov dx, 3eh
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+mov bx, offset money
+push bp
+mov bp,sp
+mov [bp+10], bx
+call print
+pop bp
+
 mov bx, offset xloc
 mov cx, 120
 mov [bx], cx
@@ -542,6 +587,15 @@ mov [bx], al
 jmp end1
 
 end1:
+mov bx, offset xloc
+mov cx, [bx]
+mov bx, offset diggerx
+mov [bx], cx
+mov bx, offset yloc
+mov dx, [bx]
+mov bx, offset diggery
+mov [bx], dx
+
 ret
 endp move
 
@@ -782,22 +836,22 @@ mov [bx], al
  
 cmp al, 'w'
 jne Sball
-sub dx, 5
+sub dx, 1
 jmp next1
 Sball:
 cmp al, 's'
 jne Aball
-add dx, 5
+add dx, 1
 jmp next1
 Aball:
 cmp al, 'a'
 jne Dball
-sub cx, 5
+sub cx, 1
 jmp next1
 Dball:
 cmp al, 'd'
 jne next1
-add cx, 5
+add cx, 1
 
 next1:
 mov bx, offset ballx
@@ -834,7 +888,7 @@ endp shooting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc moveball
-
+;jmp test1
 ;delete the ball
 		mov bx, offset cleaner
 		mov cl, 1
@@ -859,6 +913,7 @@ mov [bx], dx
 		mov cl, 0
 		mov [bx], cl
 
+test1:
 mov bx, offset ballway
 mov al, [bx]
 
@@ -875,7 +930,17 @@ S1ball:
 cmp al, 's'
 jne A1ball
 add dx, 1
-jmp next2
+add dx, 14
+mov bh,0h
+mov ah,0Dh
+int 10h 
+sub dx, 14
+cmp al, 136
+jne next2
+mov bx, offset ballwashoot
+mov al, 0
+mov [bx], al
+jmp reset3
 A1ball:
 cmp al, 'a'
 jne D1ball
@@ -885,8 +950,18 @@ D1ball:
 cmp al, 'd'
 jne next2
 add cx, 1
-
-
+add cx, 14
+mov bh,0h
+mov ah,0Dh
+int 10h 
+sub cx, 14
+cmp al, 136
+jne next2
+mov bx, offset ballwashoot
+mov al, 0
+mov [bx], al
+jmp reset3
+  
 next2:
 mov bx, offset ballx
 mov [bx], cx
@@ -898,6 +973,10 @@ mov [bx], cx
 mov bx, offset yloc
 mov [bx], dx
 
+mov bx, offset xloc
+mov cx, [bx]
+mov bx, offset yloc
+mov dx, [bx]
 mov bh,0h
 mov ah,0Dh
 int 10h 
@@ -911,7 +990,7 @@ jmp reset3
 checkifkilled:
 mov bx, offset destroyerx
 mov ax, [bx]
-mov bx, offset ballx
+mov bx, offset ballx	
 mov cx, [bx]
 cmp cx,ax
 jne printball
@@ -1024,6 +1103,188 @@ ret
 endp cleandigger
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc nubbin
+
+mov bx, offset cleaner
+mov cl, 1
+mov [bx], cl
+
+mov bx, offset nubbinx
+mov cx, [bx]
+mov bx, offset nubbiny
+mov dx, [bx]
+
+wn:
+mov bh,0h
+mov ah,0Dh
+dec dx
+int 10h 
+inc dx
+cmp al, 136
+jne sn
+mov bx, offset nubbin_move
+mov al, 'x'
+mov [bx], al
+
+sn:
+mov bh,0h
+mov ah,0Dh
+inc dx
+int 10h
+dec dx
+cmp al, 136
+jne an
+mov bx, offset nubbin_move
+mov al, 'x'
+add bx, 1
+mov [bx], al
+
+an:
+mov bh,0h
+mov ah,0Dh
+dec cx
+int 10h
+inc cx
+cmp al, 136
+jne dn
+mov bx, offset nubbin_move
+mov al, 'x'
+add bx, 2
+mov [bx], al
+
+dn:
+mov bh,0h
+mov ah,0Dh
+inc cx
+int 10h
+dec cx
+cmp al, 136
+mov bx, offset nubbin_move
+mov al, 'x'
+add bx, 3
+mov [bx], al
+
+mov bx, offset nubbin_move
+mov cl,0
+
+amount_of_x:
+mov al, [bx]
+cmp al, 'x'
+je dirt
+inc cl
+dirt:
+inc bx
+mov dl, [bx]
+cmp dl, '$'
+jne amount_of_x
+
+cmp al, 1
+jg coords
+
+
+coords:
+mov bx, offset nubbin_move
+
+mov al, [bx]
+cmp al, 'x'
+je nextcord
+
+
+nextcord:
+
+
+
+ret
+endp nubbin
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc money1
+mov bx, offset moneyx
+mov cx, [bx]
+mov bx, offset moneyy
+mov dx, [bx]
+add dx, 1
+mov bh,0h
+mov ah, 0dh
+int 10h
+cmp al, 136
+je end2
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+  
+		mov bx, offset cleaner
+		mov cl, 0
+		mov [bx], cl
+		push bp
+		mov bp,sp
+		call print
+pop bp		
+		;call delay
+	mov bx, offset cleaner
+		mov cl, 1
+		mov [bx], cl
+;inc dx
+mov bx, offset yloc
+mov [bx], dx
+mov bx, offset money
+		push bp
+		mov bp,sp
+		mov [bp+10], bx
+		call print
+pop bp	
+
+mov bx, offset diggerx
+mov cx, [bx]
+mov bx, offset diggery
+mov dx, [bx]
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+end2:
+ret
+endp money1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc diggerdead
+mov bx, offset lives
+mov cl, [bx]
+dec cl
+mov [bx], cl
+mov ax, 30
+mov bx, offset destroyerx
+mov [bx], ax
+mov ax, 40
+mov bx, offset destroyery
+mov [bx], ax
+
+ret
+endp diggerdead
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc clean
+call diamondscore
+mov ah, 02h
+mov bh, 00h
+mov dh, 01h ;row
+mov dl, 07h  ;column
+int 10h
+
+mov dx, offset scoremessage
+mov ah, 9h
+int 21h 
+ret
+endp clean
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1043,19 +1304,6 @@ mov bp,sp
 mov [bp+10], bx
 pop bp
 
-waiting: ;wait until a key is pressed & check what key was entered
-
-call diamondscore
-mov ah, 02h
-mov bh, 00h
-mov dh, 01h ;row
-mov dl, 07h  ;column
-int 10h
-
-mov dx, offset scoremessage
-mov ah, 9h
-int 21h 
-
 mov bx, offset xloc
 mov cx, [bx]
 mov bx, offset diggerx
@@ -1064,32 +1312,32 @@ mov bx, offset yloc
 mov dx, [bx]
 mov bx, offset diggery
 mov [bx], dx
+
+waiting: ;wait until a key is pressed & check what key was entered
+call clean
   
 		mov bx, offset cleaner
 		mov cl, 0
 		mov [bx], cl
 		push bp
 		mov bp,sp
-		call print
-;pop bp		
+		call print	
 		call delay
 	mov bx, offset cleaner
 		mov cl, 1
 		mov [bx], cl
-		;push bp
-		;mov bp,sp
 		call print
 		pop bp
 
+;call money1
+
+destroyer_shot:
 mov bx, offset destroyerdead
 mov al, [bx]
-cmp al, 0
-jne exit
-call destroyer
-jmp did_digger_died
-
-clean_dead_destroyer:
-call deletedestroyer
+cmp al, 1
+je exit
+;call destroyer
+jmp countine2
 
 did_digger_died:
 mov bx, offset death
@@ -1101,6 +1349,14 @@ mov cl, [bx]
 cmp cl, 6
 je exit
 
+clean_dead_destroyer:
+call deletedestroyer
+
+death1:
+call diggerdead
+jmp waiting
+
+countine2:
 mov bx, offset ballwashoot
 mov al, [bx]
 cmp al, 1
