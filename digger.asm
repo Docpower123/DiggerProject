@@ -1259,12 +1259,15 @@ mov bx, offset lives
 mov cl, [bx]
 dec cl
 mov [bx], cl
-mov ax, 30
+
+mov ax, 40
 mov bx, offset destroyerx
 mov [bx], ax
-mov ax, 40
+mov ax, 30
 mov bx, offset destroyery
 mov [bx], ax
+
+call destroyer
 
 ret
 endp diggerdead
@@ -1336,23 +1339,35 @@ mov bx, offset destroyerdead
 mov al, [bx]
 cmp al, 1
 je exit
-;call destroyer
-jmp countine2
+call destroyer
+;jmp countine2
 
 did_digger_died:
 mov bx, offset death
 mov cl, [bx]
 cmp cl, 1
-je exit
+je death1
 mov bx, offset score
 mov cl, [bx]
 cmp cl, 6
 je exit
+jmp countine2
 
-clean_dead_destroyer:
+clean_dead_destroyer: ;need fixing 
 call deletedestroyer
 
 death1:
+mov bx, offset lives
+mov cl, [bx]
+cmp cl, 0
+je exit
+mov bx, offset death
+mov cl, 0
+mov [bx], cl
+mov bx, offset destroyerdead
+mov al, 1
+mov al, [bx]
+;call deletedestroyer
 call diggerdead
 jmp waiting
 
