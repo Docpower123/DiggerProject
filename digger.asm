@@ -13,7 +13,7 @@ destroyery dw 30
 
 diggerx dw 30
 
-diggery dw 60
+diggery dw 66
 
 ballx dw 30
 
@@ -295,6 +295,8 @@ moneyy db 20
 
 lives db 3
 
+lives_loc db 210
+
 
 CODESEG
 
@@ -334,7 +336,7 @@ push dx
 push cx
 push ax
 push bx
-mov dx,0
+mov dx,15
 
 screenY:
 inc dx ;move a line in the y cords
@@ -347,7 +349,7 @@ INT 10h
 inc cx ;inc the x value
 cmp cx, 1920 
 jne screenX  
-cmp dx, 400 
+cmp dx, 198
 jne screenY
 
 pop bx
@@ -485,7 +487,7 @@ mov bx, offset xloc
 mov cx, 120
 mov [bx], cx
 mov bx, offset yloc
-mov dx, 20
+mov dx, 30
 mov [bx], dx
 mov bx, offset diggerD
 push bp
@@ -535,7 +537,7 @@ mov bx, offset diggerW
 mov [bp+10], bx
 mov bx, offset yloc
 mov cx, [bx]
-cmp cx, 1
+cmp cx, 18
 jl end1
 sub cx, 1
 mov [bx], cx
@@ -1269,6 +1271,30 @@ mov [bx], ax
 
 call destroyer
 
+mov dx, 1
+mov bx, offset lives_loc
+mov cx, [bx]
+add cx, 30
+mov [bx], cx
+
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+		mov bx, offset cleaner
+		mov cl, 0
+		mov [bx], cl
+		push bp
+		mov bp,sp
+		call print
+pop bp		
+		;call delay
+	mov bx, offset cleaner
+		mov cl, 1
+		mov [bx], cl
+
+
 ret
 endp diggerdead
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1287,6 +1313,73 @@ mov ah, 9h
 int 21h 
 ret
 endp clean
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+proc print_UI
+mov dx,0
+mov cx, 0
+
+screeny1:
+inc dx ;move a line in the y cords
+mov cx, 0 ;reset the x valuve to the start of the line
+screenX1:
+MOV AH,0Ch                   ;set the configuration to writing a pixel
+MOV AL,0   
+MOV BH,00h  
+INT 10h
+inc cx ;inc the x value
+cmp cx, 1920 
+jne screenX1  
+cmp dx, 16
+jne screenY1
+
+screeny2:
+inc dx ;move a line in the y cords
+mov cx, 0 ;reset the x valuve to the start of the line
+screenX2:
+MOV AH,0Ch                  ;set the configuration to writing a pixel
+MOV AL,2 
+MOV BH,00h  
+INT 10h
+inc cx ;inc the x value
+cmp cx, 1920 
+jne screenX2  
+cmp dx, 17
+jne screenY2
+
+
+mov cx, 210
+mov dx, 1
+mov di, 3 
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+print_lives:
+push di
+mov bx, offset xloc
+mov cx, [bx]
+add cx, 30
+mov [bx], cx
+mov bx, offset diggerD
+push bp
+mov bp, sp
+mov [bp+10], bx
+call print
+pop bp
+;mov bx, offset xloc
+;mov cx, [bx]
+pop di
+dec di
+cmp di, 0
+jne print_lives
+
+ret
+endp print_UI
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                         main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1299,8 +1392,9 @@ mov ax, 13h
 int 10h
 
 call screen
-
+call print_UI
 call begin
+
 mov bx, offset diggerA
 push bp
 mov bp,sp
