@@ -681,7 +681,7 @@ out 61h, al
 mov al, 0B6h
 out 43h, al
 ; play frequency 131Hz
-mov ax, [note]
+mov ax, [ word ptr note]
 out 42h, al ; Sending lower byte
 mov al, ah
 out 42h, al ; Sending upper byte
@@ -815,7 +815,6 @@ mov [bx], dx
 
 ret
 endp destroyer
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1257,19 +1256,11 @@ endp money1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 proc diggerdead
+
 mov bx, offset lives
 mov cl, [bx]
 dec cl
 mov [bx], cl
-
-mov ax, 40
-mov bx, offset destroyerx
-mov [bx], ax
-mov ax, 30
-mov bx, offset destroyery
-mov [bx], ax
-
-call destroyer
 
 mov dx, 1
 mov bx, offset lives_loc
@@ -1283,16 +1274,32 @@ mov bx, offset yloc
 mov [bx], dx
 
 		mov bx, offset cleaner
-		mov cl, 0
+		mov cl, 1
 		mov [bx], cl
 		push bp
 		mov bp,sp
 		call print
 pop bp		
-		;call delay
 	mov bx, offset cleaner
-		mov cl, 1
+		mov cl, 0
 		mov [bx], cl
+
+mov bx, offset diggerx
+mov cx, [bx]
+mov bx, offset diggery
+mov dx, [bx]
+mov bx, offset xloc
+mov [bx], cx
+mov bx, offset yloc
+mov [bx], dx
+
+mov ax, 40
+mov bx, offset destroyerx
+mov [bx], ax
+mov ax, 30
+mov bx, offset destroyery
+mov [bx], ax
+
 
 
 ret
@@ -1377,6 +1384,21 @@ dec di
 cmp di, 0
 jne print_lives
 
+mov al, 1
+mov bh, 0
+mov bl, 0111b
+mov cx, 6 ;offset msg1 ; calculate message size.
+mov dl, 1
+mov dh, 1
+push cs
+pop es
+mov bp, offset msg2
+mov ah, 13h
+int 10h
+jmp msg2end
+ msg2 db "Score:"
+ msg2end: 
+
 ret
 endp print_UI
 
@@ -1426,7 +1448,7 @@ call clean
 		call print
 		pop bp
 
-;call money1
+call money1
 
 destroyer_shot:
 mov bx, offset destroyerdead
