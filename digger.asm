@@ -328,7 +328,6 @@ endp delay
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;move pixel by pixel and change it's color to brown  (using int 10h) 
-;reminder! add starting tunnel
 
 proc screen
 
